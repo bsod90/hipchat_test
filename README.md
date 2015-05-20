@@ -23,5 +23,3 @@ To run tests simply run
 ```
 $ nosetests
 ```
-
-*NOTE 2:* Tests actually call real world internet endpoints, see inline comments.

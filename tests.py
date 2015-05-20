@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+import mock
 import unittest
-from parser import parse
+from StringIO import StringIO
 
 INPUT_1 = u"""
 Hey @boss,
@@ -23,8 +24,8 @@ https://github.com/bsod90/hipchat_test
 
 INPUT_4 = u"""
 Finally, many links in a single message:
-http://hackertyper.com/
-http://google.com
+http://hackertyper.com
+https://google.com
 http://twitter.com
 http://wikipedia.org
 http://hipchat.com
@@ -32,28 +33,41 @@ http://yahoo.com
 http://example.com
 http://example.org/and/some/path/here?with=params
 http://and-some-404.org
-And even 10mb file
-http://ipv4.download.thinkbroadband.com/10MB.zip
+And even 5mb file
+http://web4host.net/5MB.zip
 """
 
 
+def urlopen_file_mock(link):
+    link = link.replace("http://", "").replace("https://", "").strip()
+    suffixes = ("/", ".com", ".org", ".net", ".ru")
+    for suffix in suffixes:
+        if link.endswith(suffix):
+            if link[-1] != "/":
+                link += "/"
+            link = link + "index.html"
+    try:
+        test_file = open("./test_data/" + link, 'r')
+        return test_file
+    except IOError:
+        return StringIO("")
+
+
+@mock.patch('eventlet.green.urllib2.urlopen', urlopen_file_mock)
 class ParserTestCase(unittest.TestCase):
 
-# IMPORTANT NOTE:
-# This test case actually calls real world internet endpoint
-# Which is of course really bad.
-# In real system I would assume that I have some test utils
-# That provide me an urllib2 interceptor, so I can actually
-# Mock all those requests.
+    def setUp(self):
+        from parser import parse
+        self.parse = parse
 
     def test_input_1(self):
-        result = parse(INPUT_1)
+        result = self.parse(INPUT_1)
         self.assertIn('peter', result['mentions'])
         self.assertIn('boss', result['mentions'])
         self.assertIn('fry', result['emoticons'])
 
     def test_input_2(self):
-        result = parse(INPUT_2)
+        result = self.parse(INPUT_2)
         self.assertIn('beer', result['emoticons'])
         self.assertIn('pizza', result['emoticons'])
         self.assertIn(
@@ -66,7 +80,7 @@ class ParserTestCase(unittest.TestCase):
         )
 
     def test_input_3(self):
-        result = parse(INPUT_3)
+        result = self.parse(INPUT_3)
         self.assertIn(u'шапка', result['mentions'])
         self.assertIn(u'водка', result['mentions'])
         self.assertIn(u'балалайка', result['mentions'])
@@ -76,12 +90,12 @@ class ParserTestCase(unittest.TestCase):
         )
 
     def test_input_4(self):
-        result = parse(INPUT_4)
+        result = self.parse(INPUT_4)
         links = [link['link'] for link in result['links']]
         titles = [link['title'] for link in result['links']]
 
-        self.assertIn('http://hackertyper.com/', links)
-        self.assertIn('http://google.com', links)
+        self.assertIn('http://hackertyper.com', links)
+        self.assertIn('https://google.com', links)
         self.assertIn('http://twitter.com', links)
         self.assertIn('http://wikipedia.org', links)
         self.assertIn('http://hipchat.com', links)
@@ -93,7 +107,7 @@ class ParserTestCase(unittest.TestCase):
         )
         self.assertIn('http://and-some-404.org', links)
         self.assertIn(
-            'http://ipv4.download.thinkbroadband.com/10MB.zip',
+            'http://web4host.net/5MB.zip',
             links
         )
 
@@ -101,6 +115,6 @@ class ParserTestCase(unittest.TestCase):
         self.assertIn('Yahoo', titles)
         self.assertIn('Example Domain', titles)
         self.assertIn(
-            'http://ipv4.download.thinkbroadband.com/10MB.zip',
+            'http://web4host.net/5MB.zip',
             titles
         )
