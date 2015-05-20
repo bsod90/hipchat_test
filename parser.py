@@ -57,7 +57,7 @@ def fetch_titles(links):
 
 def parse(msg):
     """
-        Takes string message on input and returns information about 
+        Takes string message on input and returns information about
         - mentions
         - emoticons
         - urls

@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/bsod90/hipchat_test.svg)](https://travis-ci.org/bsod90/hipchat_test)
+
 Here's my solution to HipChat test assesment.
 
 To install requirements run
