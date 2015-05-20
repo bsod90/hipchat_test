@@ -28,7 +28,9 @@ def fetch_titles(links):
         with Timeout(10, False):
             try:
                 # Read up to 50K of the page
-                response = urllib2.urlopen(link).read(51200)
+                fd = urllib2.urlopen(link)
+                response = fd.read(51200)
+                fd.close()
             except:
                 return {
                     "link": link,
